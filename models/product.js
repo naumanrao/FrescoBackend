@@ -17,12 +17,23 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       enum: ['discrete', 'bulk'],
       default: 'discrete'
-    }, 
+    },
     size: {
       type: String,
-      enum: ['kg', 'g', 'L', 'mL',"units"],
-      required: function() {
-        return this.unitType === 'bulk' || this.unitType === 'discrete';;
+      required: function () {
+        // Required only if type is 'raw'
+        return this.type === 'raw';
+      },
+      validate: {
+        validator: function (value) {
+          // For 'raw', restrict to allowed enums
+          if (this.type === 'raw') {
+            return ['kg', 'g', 'L', 'mL', 'units'].includes(value);
+          }
+          // For 'ready', allow any string or even empty string
+          return true;
+        },
+        message: props => `${props.value} is not a valid size for raw materials`
       }
     },
     name: {
@@ -41,30 +52,11 @@ const ProductSchema = new mongoose.Schema(
     },
     price: Number,
     description: String,
-    ingredients: [
-      {
-        material: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'product',
-          required: true
-        },
-        quantity: {
-          type: Number,
-          required: true,
-          min: 0
-        },
-        waste: {
-          type: Number,
-          required: true,
-          min: 0
-        }
-      }
-    ]
   },
   { timestamps: true }
 );
 
-// Add compound index for better query performance
+// Compound index
 ProductSchema.index({ userID: 1, type: 1 });
 
 const Product = mongoose.model("product", ProductSchema);

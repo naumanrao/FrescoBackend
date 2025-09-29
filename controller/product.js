@@ -12,34 +12,34 @@ const addProduct = async (req, res) => {
     session.startTransaction();
     const [newProduct] = await Product.create([req.body], { session });
 
-    if (newProduct.type === 'ready') {
-      for (const ingredient of newProduct.ingredients) {
-        const rawMaterial = await Product.findById(ingredient.material).session(session);
+    // if (newProduct.type === 'ready') {
+    //   for (const ingredient of newProduct.ingredients) {
+    //     const rawMaterial = await Product.findById(ingredient.material).session(session);
         
-        if (!rawMaterial) throw new Error(`Raw material ${ingredient.material} not found`);
+    //     if (!rawMaterial) throw new Error(`Raw material ${ingredient.material} not found`);
         
-        const quantity = Number(ingredient.quantity);
-        const waste = Number(ingredient.waste);
-        const productStock = Number(newProduct.stock);
+    //     const quantity = Number(ingredient.quantity);
+    //     const waste = Number(ingredient.waste);
+    //     const productStock = Number(newProduct.stock);
         
-        if ([quantity, waste, productStock].some(isNaN)) {
-          throw new Error('Invalid numerical values in ingredient calculation');
-        }
+    //     if ([quantity, waste, productStock].some(isNaN)) {
+    //       throw new Error('Invalid numerical values in ingredient calculation');
+    //     }
 
-        const requiredQuantity = (quantity + waste) * productStock;
+    //     const requiredQuantity = (quantity + waste) * productStock;
         
-        if (rawMaterial.unitType === 'discrete' && !Number.isInteger(requiredQuantity)) {
-          throw new Error(`Invalid quantity for ${rawMaterial.name}: Requires whole numbers`);
-        }
+    //     if (rawMaterial.unitType === 'discrete' && !Number.isInteger(requiredQuantity)) {
+    //       throw new Error(`Invalid quantity for ${rawMaterial.name}: Requires whole numbers`);
+    //     }
 
-        if (rawMaterial.stock < requiredQuantity) {
-          throw new Error(`Insufficient stock for ${rawMaterial.name} (Need ${requiredQuantity}, Have ${rawMaterial.stock})`);
-        }
+    //     if (rawMaterial.stock < requiredQuantity) {
+    //       throw new Error(`Insufficient stock for ${rawMaterial.name} (Need ${requiredQuantity}, Have ${rawMaterial.stock})`);
+    //     }
 
-        rawMaterial.stock -= requiredQuantity;
-        await rawMaterial.save({ session });
-      }
-    }
+    //     rawMaterial.stock -= requiredQuantity;
+    //     await rawMaterial.save({ session });
+    //   }
+    // }
 
     await session.commitTransaction();
     res.status(201).json(newProduct);
@@ -60,7 +60,7 @@ const addProduct = async (req, res) => {
 const getAllProducts = async (req, res) => {
   const findAllProducts = await Product.find({
     userID: req.params.userID,
-  }).sort({ _id: -1 }).populate("ingredients.material", "name size unitType manufacturer"); // -1 for descending;
+  }).sort({ _id: -1 })
   res.json(findAllProducts);
 };
 
@@ -148,26 +148,26 @@ const bulkUpload = async (req, res) => {
     for (const [index, item] of items.entries()) {
       try {
         // Process ready products
-        if (type === 'ready') {
-          const ingredients = item.ingredients || [];
+        // if (type === 'ready') {
+        //   const ingredients = item.ingredients || [];
           
-          // Validate and reserve stock first
-          for (const ingredient of ingredients) {
-            const material = await Product.findById(ingredient.material).session(session);
+        //   // Validate and reserve stock first
+        //   for (const ingredient of ingredients) {
+        //     const material = await Product.findById(ingredient.material).session(session);
             
-            if (!material) throw new Error(`Material ${ingredient.material} not found`);
-            if (material.type !== 'raw') throw new Error(`${material.name} is not a raw material`);
+        //     if (!material) throw new Error(`Material ${ingredient.material} not found`);
+        //     if (material.type !== 'raw') throw new Error(`${material.name} is not a raw material`);
             
-            const required = (Number(ingredient.quantity) + Number(ingredient.waste)) * Number(item.stock);
+        //     const required = (Number(ingredient.quantity) + Number(ingredient.waste)) * Number(item.stock);
             
-            if (material.stock < required) {
-              throw new Error(`Insufficient stock for ${material.name} (Need ${required}, Have ${material.stock})`);
-            }
+        //     if (material.stock < required) {
+        //       throw new Error(`Insufficient stock for ${material.name} (Need ${required}, Have ${material.stock})`);
+        //     }
             
-            material.stock -= required;
-            await material.save({ session });
-          }
-        }
+        //     material.stock -= required;
+        //     await material.save({ session });
+        //   }
+        // }
 
         const product = new Product({ ...item, userID: userId });
         const doc = await product.save({ session });
