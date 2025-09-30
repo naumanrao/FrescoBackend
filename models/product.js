@@ -52,6 +52,25 @@ const ProductSchema = new mongoose.Schema(
     },
     price: Number,
     description: String,
+     ingredients: [
+      {
+        material: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'product',
+          required: true
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 0
+        },
+        waste: {
+          type: Number,
+          required: true,
+          min: 0
+        }
+      }
+    ]
   },
   { timestamps: true }
 );
